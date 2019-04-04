@@ -1,0 +1,128 @@
+NLRI Encoding as per
+---------------------
+
+RFC5575 - Dissemination of Flow Specification Rules
+
+
+Compile package
+---------------------
+ $ make
+ 
+Run interactive mode
+---------------------
+ $ ./flospec
+ 
+ waits in the nlri> prompt, type the flow description string and hit <enter>
+ In the nlri> prompt, 'show' shows upto 5 previous flow description history
+ and the 'compare' command can be used to compare any 2 of them
+ use Ctrl-D or type quit to end.
+
+Files:
+---------------------
+Makefile
+README      - this file
+README.code - Explanation of Data structures used
+TODO        - what can be done better? what more can be added?
+encode.c    - encoding macros
+flospec.c   - main file; has 2 different interfaces (see below) to encode NLRI 
+token.c     - tokeniser for a human readable description of NLRI
+bitset.h    - bit set routines (handles all endiannes)
+dscp_cp.h   - DSCP code point definitions
+utils.c
+iana_ip_proto.h - picked up from http://www.iana.org/assignments/protocol-numbers/
+
+Ways to encode flow spec:
+------------------------
+
+To test the encoder, the encoding Macros can be used within the code
+or the more convenient  readable description can be given in a string form
+to the tokeniser which will parse and interpret the NLRI components
+and then order them in ascending order and encode. 
+
+To test, the flospec.c creates a interactive program which will read a line
+containing the flow description and encodes it, later decodes and displays it
+to verify (the decoder dumps data in UPPERCASE).
+
+The Macros needed for encode can be seen in the encode.h and the
+flospec.h files and does not need much of an explanation
+
+For interactive flow description, the following are the keywords 
+
+    prefix.dest
+    prefix.src
+    ip.proto
+    port
+    port.dest
+    port.src
+    icmp.type
+    icmp.code
+    tcp.flags
+    pak.len
+    dscp
+    fragment
+
+and can be combined as follows
+
+   ip.proto = tcp|udp and port.dest >= 300 & <= 600 and tcp.flags = 0x80
+
+Note:
+---------------------
+   - 'and' is used to seperate the flow components, and within a component
+     rule-set, c-style bitwise '|' and  '&' is used to specify more than
+     1 value.
+   - The comparison operators are again c-style: != >= <= < >, except = (not ==)
+   - No new operators are assigned for bitwise op, hence = and != have to 
+     be used
+   - only commonly used protos are recognised - like 'tcp' 'rsvp' 'icmp' etc
+
+Debugging & understanding
+------------------------
+set the DEBUG macro in debug.h to a non zero value to see whats
+happening under cover.
+make clean and re-make before re run.
+
+Quirks:
+---------------------
+ - Within the values of a component, & (if used) has to appear before |
+ - While specifying prefixes, the IP address have to be fully given, i.e,
+   10.0.1/24 should be given as 10.0.1.0/24 (limitation of ip_addr() )
+ - If length omitted in the above case, it is treated as /32
+
+
+Examples (from the RFC)
+----------------------
+
+nlri> prefix.dest = 10.0.1.0/24 and ip.proto = tcp and port = 25
+
+ Final buf len = 12, data/hdr len = 11 (B)
+ 0B 01 18 0A 00 01 03 81 06 04 81 19 
+
+ DEST-PREFIX  = 0xA000100/24 
+ AND
+ IP-PROTO = 0x6 
+ AND
+ PORT = 0x19 
+
+nlri> prefix.dest = 10.0.1.0/24 and  prefix.src = 192.0.0.0/8 and port >= 137 & <= 139 | = 8080
+
+ Final buf len = 17, data/hdr len = 16 (10)
+ 10 01 18 0A 00 01 02 08 C0 04 03 89 45 8B 91 1F 90 
+
+ DEST-PREFIX  = 0xA000100/24 
+ AND
+ SOURCE-PREFIX = 0xC0000000/8 
+ AND
+ PORT >= 0x89  AND PORT <= 0x8B  OR PORT = 0x1F90 
+
+nlri> show
+
+ [0] : prefix.dest = 10.0.1.0/24 and  prefix.src = 192.0.0.0/8 and port >= 137 & <= 139 | = 8080
+
+ [1] : prefix.dest = 10.0.1.0/24 and ip.proto = tcp and port = 25
+
+nlri> compare 0 1
+
+ Precedence: prefix.dest = 10.0.1.0/24 and ip.proto = tcp and port = 25
+
+nlri>
+

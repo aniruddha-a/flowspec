@@ -1,0 +1,84 @@
+
+Main Data Structures 
+
+Defined in flospec.h
+
+flo_data_t
+
+  Purpose: to store the prefix/value or op,value of the flow components
+           and is used to indicate if this value is to be anded/or'd with
+           the previous value.
+ 
+               +------------+
+         bool  |   and      |
+               +------------+
+         op_t  |   op       |
+               +------------+
+         uint32|   value    |
+               +------------+
+         uint8 |   len      |  --> used only for prefix types 
+               +------------+
+
+            The eol bit is not stored, the encoder adds it
+
+
+flo_list_t
+
+  Purpose: To store the flow components to be passed to the comparator
+           Also, the tokeniser stores the parsed values in this DS, so 
+           that type ordering of the components can be enforced before
+           encoding. flo_list_t array is always created for all [12] components
+           and the array index is used to refer to component type
+
+               int          flo_data_t []
+               +--+----+
+        unused |  |    |
+               +--+----+   +------+-----+--------------+-----+
+              1|n | d  |-->|      |     |     ...      |     |
+               +--+----+   +------+-----+--------------+-----+
+               |  |    |
+               +--+----+
+               |  |    |
+               +--+----+
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  |    |
+               |  ...  |
+               |  ...  |
+               |  |    |
+               +--+----+  +----+----+------------+-----+
+            12 |  |    |->|    |    |      ...   |     |
+               +--+----+  +----+----+------------+-----+
+
+
+
+flo_decode_t
+
+  Purpose:  This is filled by the decoder, similar to flo_list_t
+            just that the component type is also stored instead of
+            inferring it from the array index; initial thot was to
+            save some mem, but doesnt make much of a difference
+            and flo_list_t could have been used as well.
+
+
+       flo_comp_t  int            flo_data_t
+         +-----+----------+---+   +-------+-------+------+-----+
+         |comp | num_elems| d |-->|       |       | ...  |     |
+         +-----+----------+---+   +-------+-------+------+-----+
+         |     |          |   |
+         +-----+----------+---+
+         |     |          |   |
+         |     |          |   |
+         |     |  ...     |   |
+         |     |  ...     |   |
+         |     |          |   |
+         |     |          |   |
+         |     |          |   |
+         +-----+----------+---+
+

@@ -1,0 +1,15 @@
+
+
+TBD
+---------------------
+- Handle the 'm' bit in the bitwise op
+  The bitwise operator has 'not' bit and 'match' bit; I have not considered
+  the 'match' bit for the sake of simplicity, also it makes sense only when
+  actually matching a value against a packet/field. In the encode, match bit
+  is always set by the encoder.
+- Better tokenising of & and | in the component data parsing
+- remove all static allocations
+- store all the protocol name strings like 'tcp', 'udp' etc 
+  in a trie like DS for faster association with value
+  and the same DS can be used for the flow spec tokens as well
+  (ip.proto, port.src ...)
